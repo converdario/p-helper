@@ -18,7 +18,7 @@ namespace GHelperAutoProfileSwitcher
         private ObservableCollection<AppProfile> _profiles;
         private TargetMode _defaultMode = TargetMode.Balanced;
         private DispatcherTimer _timer;
-        private NotifyIcon _notifyIcon;
+        private NotifyIcon? _notifyIcon;
         private TargetMode _currentMode = TargetMode.Balanced;
         private IntPtr _currentIconHandle = IntPtr.Zero;
 
@@ -94,7 +94,7 @@ namespace GHelperAutoProfileSwitcher
         public MainWindow()
         {
             InitializeComponent();
-            
+
             ModeColumn.ItemsSource = Enum.GetValues(typeof(TargetMode));
 
             var config = ConfigManager.LoadConfig();
@@ -112,6 +112,29 @@ namespace GHelperAutoProfileSwitcher
             _timer.Interval = TimeSpan.FromSeconds(5);
             _timer.Tick += Timer_Tick;
             _timer.Start();
+        }
+
+        private void ScanFolders_Click(object sender, RoutedEventArgs e)
+        {
+            ScannerDialog dialog = new ScannerDialog();
+            dialog.Owner = this;
+
+            if (dialog.ShowDialog() == true && dialog.SelectedProcesses.Count > 0)
+            {
+                foreach (var processName in dialog.SelectedProcesses)
+                {
+                    // Aggiunge solo i profili che non esistono già
+                    if (!_profiles.Any(p => p.ProcessName == processName))
+                    {
+                        _profiles.Add(new AppProfile { ProcessName = processName, Mode = _defaultMode });
+                    }
+                }
+                
+                // Salva la configurazione
+                var config = ConfigManager.LoadConfig();
+                config.Profiles = _profiles.ToList();
+                ConfigManager.SaveConfig(config);
+            }
         }
 
         private void SetupTrayIcon()

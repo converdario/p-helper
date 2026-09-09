@@ -52,6 +52,7 @@
                 <TextBlock Text="Current Mode: " VerticalAlignment="Center" Margin="0,0,5,0"/>
                 <TextBlock Name="CurrentModeText" Text="Balanced" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
                 <Button Content="Add Current App" Width="120" Height="30" Click="AddCurrentApp_Click" />
+                <Button Content="Scan Folders..." Width="100" Margin="10,0,0,0" Click="ScanFolders_Click" />
                 <Button Content="Save" Width="80" Height="30" Margin="10,0,0,0" Click="Save_Click" />
             </StackPanel>
         </Grid>

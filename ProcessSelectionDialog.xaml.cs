@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Linq;
+using Microsoft.Win32;
 
 namespace GHelperAutoProfileSwitcher
 {
@@ -13,6 +14,20 @@ namespace GHelperAutoProfileSwitcher
             InitializeComponent();
             ProcessListBox.ItemsSource = processes;
             ProcessListBox.DisplayMemberPath = "DisplayName";
+        }
+
+        private void BrowseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            
+            openFileDialog.Filter = "Executable files (*.exe)|*.exe";
+            openFileDialog.Title = "Select executable file";
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                SelectedProcess = System.IO.Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                DialogResult = true;
+            }
         }
 
         private void Ok_Click(object sender, RoutedEventArgs e)

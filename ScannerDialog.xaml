@@ -1,0 +1,45 @@
+<Window x:Class="GHelperAutoProfileSwitcher.ScannerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Scan Game Folders" Height="450" Width="600" WindowStartupLocation="CenterOwner">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Sezione in alto: Gestione Cartelle -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            
+            <ListBox Name="FoldersListBox" Grid.Column="0" Height="80" Margin="0,0,10,0"/>
+            
+            <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                <Button Content="Add Folder..." Click="AddFolder_Click" Margin="0,0,0,5" Padding="5"/>
+                <Button Content="Remove" Click="RemoveFolder_Click" Padding="5"/>
+            </StackPanel>
+            
+            <Button Grid.Column="2" Content="START SCAN" Click="Scan_Click" Width="100" FontWeight="Bold"/>
+        </Grid>
+
+        <!-- Sezione centrale: Risultati con Checkbox -->
+        <ListBox Name="ResultsListBox" Grid.Row="1" Margin="0,0,0,10">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <CheckBox Content="{Binding FileName}" IsChecked="{Binding IsSelected}" ToolTip="{Binding FullPath}" Margin="0,2"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Sezione in basso: Azioni -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Add Selected" Width="100" Margin="0,0,10,0" Click="AddSelected_Click" />
+            <Button Content="Cancel" Width="60" Click="Cancel_Click" />
+        </StackPanel>
+    </Grid>
+</Window>
