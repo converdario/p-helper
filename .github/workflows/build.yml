@@ -34,15 +34,15 @@ jobs:
         dotnet-version: 8.0.x
         
     - name: Restore dependencies
-      run: dotnet restore GHelperAutoProfileSwitcher.csproj
+      run: dotnet restore PHelper.csproj
       
     - name: Publish
-      run: dotnet publish GHelperAutoProfileSwitcher.csproj --no-restore --configuration ${{ inputs.build_config || 'Release' }} -o ./publish
+      run: dotnet publish PHelper.csproj --no-restore --configuration ${{ inputs.build_config || 'Release' }} -o ./publish
       
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: GHelperAutoProfileSwitcher-${{ inputs.build_config || 'Release' }}
+        name: PHelper-${{ inputs.build_config || 'Release' }}
         path: ./publish/
 
   release:
@@ -55,17 +55,17 @@ jobs:
     - name: Download Artifact
       uses: actions/download-artifact@v4
       with:
-        name: GHelperAutoProfileSwitcher-Release
+        name: PHelper-Release
         path: ./publish/
         
     - name: Zip files
       run: |
         cd publish
-        zip -r ../GHelperAutoProfileSwitcher.zip ./*
+        zip -r ../PHelper.zip ./*
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: GHelperAutoProfileSwitcher.zip
+        files: PHelper.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GHelperAutoProfileSwitcher", "GHelperAutoProfileSwitcher.csproj", "{E5FE758D-68CF-A5F0-A06C-825042932A2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PHelper", "PHelper.csproj", "{E5FE758D-68CF-A5F0-A06C-825042932A2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

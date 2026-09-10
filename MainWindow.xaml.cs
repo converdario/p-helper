@@ -5,13 +5,15 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
+using System.Windows.Controls;
 using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
+using ComboBox = System.Windows.Controls.ComboBox;
 
-namespace GHelperAutoProfileSwitcher
+namespace PHelper
 {
     public partial class MainWindow : Window
     {
@@ -75,7 +77,7 @@ namespace GHelperAutoProfileSwitcher
                 IntPtr hIcon = bitmap.GetHicon();
                 System.Drawing.Icon newIcon = System.Drawing.Icon.FromHandle(hIcon);
 
-                var oldIcon = _notifyIcon.Icon;
+                var oldIcon = _notifyIcon!.Icon;
                 _notifyIcon.Icon = newIcon;
                 _notifyIcon.Text = $"G-Helper - {_currentMode}";
 
@@ -95,45 +97,51 @@ namespace GHelperAutoProfileSwitcher
         {
             InitializeComponent();
 
-            ModeColumn.ItemsSource = Enum.GetValues(typeof(TargetMode));
-
             var config = ConfigManager.LoadConfig();
             _defaultMode = config.DefaultMode;
             _profiles = new ObservableCollection<AppProfile>(config.Profiles);
             ProfilesGrid.ItemsSource = _profiles;
+            _profiles.CollectionChanged += (s, e) => SaveConfigSilently();
 
             DefaultModeComboBox.ItemsSource = Enum.GetValues(typeof(TargetMode));
             DefaultModeComboBox.SelectedItem = _defaultMode;
 
             SetupTrayIcon();
-            CheckStartWithWindows();
+            RegistryKey? rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false);
+            StartWithWindowsCheckBox.IsChecked = rk?.GetValue("PHelper") != null;
 
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromSeconds(5);
             _timer.Tick += Timer_Tick;
             _timer.Start();
+            CurrentModeText.Text = _currentMode.ToString();
+            Timer_Tick(null, EventArgs.Empty);
         }
 
         private void ScanFolders_Click(object sender, RoutedEventArgs e)
         {
-            ScannerDialog dialog = new ScannerDialog();
+            var currentProcesses = _profiles.Select(p => p.ProcessName).ToList();
+            
+            ScannerDialog dialog = new ScannerDialog(currentProcesses);
             dialog.Owner = this;
 
-            if (dialog.ShowDialog() == true && dialog.SelectedProcesses.Count > 0)
+            if (dialog.ShowDialog() == true)
             {
-                foreach (var processName in dialog.SelectedProcesses)
+                foreach (var item in dialog.SelectedExecutables)
                 {
-                    // Aggiunge solo i profili che non esistono già
-                    if (!_profiles.Any(p => p.ProcessName == processName))
+                    if (!_profiles.Any(p => p.ProcessName.Equals(item.FileName, System.StringComparison.OrdinalIgnoreCase)))
                     {
-                        _profiles.Add(new AppProfile { ProcessName = processName, Mode = _defaultMode });
+                        _profiles.Add(new AppProfile { ProcessName = item.FileName!, Mode = _defaultMode, FullPath = item.FullPath! });
                     }
                 }
+
+                foreach (var item in dialog.UnselectedExecutables)
+                {
+                    var profileToRemove = _profiles.FirstOrDefault(p => p.ProcessName.Equals(item.FileName, System.StringComparison.OrdinalIgnoreCase));
+                    if (profileToRemove != null) _profiles.Remove(profileToRemove);
+                }
                 
-                // Salva la configurazione
-                var config = ConfigManager.LoadConfig();
-                config.Profiles = _profiles.ToList();
-                ConfigManager.SaveConfig(config);
+                SaveConfigSilently();
             }
         }
 
@@ -221,12 +229,12 @@ namespace GHelperAutoProfileSwitcher
             }
         }
 
-        private void DefaultModeComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void DefaultModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (DefaultModeComboBox.SelectedItem is TargetMode mode)
+            if (DefaultModeComboBox.SelectedItem is TargetMode selectedMode)
             {
-                _defaultMode = mode;
-                SaveConfig();
+                _defaultMode = selectedMode;
+                SaveConfigSilently();
             }
         }
 
@@ -276,10 +284,14 @@ namespace GHelperAutoProfileSwitcher
             }
         }
 
-        private void Save_Click(object sender, RoutedEventArgs e)
+        private void SaveConfigSilently()
         {
-            SaveConfig();
-            MessageBox.Show("Configuration saved.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (_profiles == null) return; 
+            var config = ConfigManager.LoadConfig();
+            if (config == null) return; 
+            config.DefaultMode = _defaultMode;
+            config.Profiles = _profiles.ToList();
+            ConfigManager.SaveConfig(config);
         }
 
         private void Window_StateChanged(object sender, EventArgs e)
@@ -296,36 +308,22 @@ namespace GHelperAutoProfileSwitcher
             Hide();
         }
 
-        private void CheckStartWithWindows()
-        {
-            using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", false))
-            {
-                if (key != null)
-                {
-                    StartWithWindowsCheckBox.IsChecked = key.GetValue("GHelperAutoProfileSwitcher") != null;
-                }
-            }
-        }
-
         private void StartWithWindowsCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true))
+            RegistryKey? rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+            string? appPath = Process.GetCurrentProcess().MainModule?.FileName;
+
+            if (rk == null || appPath == null) return; 
+
+            string appName = "PHelper";
+
+            if (StartWithWindowsCheckBox.IsChecked == true)
             {
-                if (key != null)
-                {
-                    if (StartWithWindowsCheckBox.IsChecked == true)
-                    {
-                        string path = Process.GetCurrentProcess().MainModule?.FileName ?? string.Empty;
-                        if (!string.IsNullOrEmpty(path))
-                        {
-                            key.SetValue("GHelperAutoProfileSwitcher", $"\"{path}\" -hidden");
-                        }
-                    }
-                    else
-                    {
-                        key.DeleteValue("GHelperAutoProfileSwitcher", false);
-                    }
-                }
+                rk.SetValue(appName, $"\"{appPath}\" -hidden");
+            }
+            else
+            {
+                rk.DeleteValue(appName, false);
             }
         }
 
@@ -399,6 +397,14 @@ namespace GHelperAutoProfileSwitcher
                 {
                     PauseAgent(0);
                 }
+            }
+        }
+
+        private void ProfileComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox cb && cb.IsLoaded)
+            {
+                SaveConfigSilently();
             }
         }
     }

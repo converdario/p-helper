@@ -5,9 +5,8 @@ using System.Linq;
 using System.Windows;
 using Microsoft.Win32;
 
-namespace GHelperAutoProfileSwitcher
+namespace PHelper
 {
-    // Modello dati per gestire le spunte nella lista
     public class ScannedExecutable
     {
         public bool IsSelected { get; set; }
@@ -19,18 +18,59 @@ namespace GHelperAutoProfileSwitcher
     {
         public ObservableCollection<string> ScanFolders { get; set; }
         public ObservableCollection<ScannedExecutable> ScanResults { get; set; }
-        public List<string> SelectedProcesses { get; private set; } = new List<string>();
+        
+        public List<ScannedExecutable> SelectedExecutables { get; private set; } = new List<ScannedExecutable>();
+        public List<ScannedExecutable> UnselectedExecutables { get; private set; } = new List<ScannedExecutable>();
+        
+        private List<string> _existingProcesses;
 
-        public ScannerDialog()
+        public ScannerDialog(List<string> existingProcesses)
         {
             InitializeComponent();
             
-            // Carica le cartelle di default dal nostro FolderScanner
-            ScanFolders = new ObservableCollection<string>(FolderScanner.GetDefaultGameFolders());
+            _existingProcesses = existingProcesses ?? new List<string>();
+            
+            var allFolders = FolderScanner.GetDefaultGameFolders();
+            var config = ConfigManager.LoadConfig();
+            
+            foreach (var folder in config.CustomScanFolders)
+            {
+                if (!allFolders.Contains(folder)) 
+                {
+                    allFolders.Add(folder);
+                }
+            }
+            
+            ScanFolders = new ObservableCollection<string>(allFolders);
             FoldersListBox.ItemsSource = ScanFolders;
 
             ScanResults = new ObservableCollection<ScannedExecutable>();
             ResultsListBox.ItemsSource = ScanResults;
+
+            this.Loaded += (s, e) => PerformScan();
+        }
+
+        private void PerformScan()
+        {
+            var currentlyChecked = ScanResults.Where(x => x.IsSelected).Select(x => x.FileName).ToList();
+            
+            ScanResults.Clear();
+            var foundFiles = FolderScanner.ScanForGameExecutables(ScanFolders.ToList());
+
+            foreach (var file in foundFiles)
+            {
+                string fileName = Path.GetFileNameWithoutExtension(file);
+                
+                bool shouldBeSelected = currentlyChecked.Contains(fileName) || 
+                                        _existingProcesses.Contains(fileName, System.StringComparer.OrdinalIgnoreCase);
+
+                ScanResults.Add(new ScannedExecutable
+                {
+                    IsSelected = shouldBeSelected,
+                    FileName = fileName,
+                    FullPath = file 
+                });
+            }
         }
 
         private void AddFolder_Click(object sender, RoutedEventArgs e)
@@ -43,6 +83,15 @@ namespace GHelperAutoProfileSwitcher
                 if (!ScanFolders.Contains(folderDialog.FolderName))
                 {
                     ScanFolders.Add(folderDialog.FolderName);
+                    
+                    var config = ConfigManager.LoadConfig();
+                    if (!config.CustomScanFolders.Contains(folderDialog.FolderName))
+                    {
+                        config.CustomScanFolders.Add(folderDialog.FolderName);
+                        ConfigManager.SaveConfig(config);
+                    }
+                    
+                    PerformScan(); 
                 }
             }
         }
@@ -52,38 +101,25 @@ namespace GHelperAutoProfileSwitcher
             if (FoldersListBox.SelectedItem is string selectedFolder)
             {
                 ScanFolders.Remove(selectedFolder);
-            }
-        }
-
-        private void Scan_Click(object sender, RoutedEventArgs e)
-        {
-            ScanResults.Clear();
-            var foundFiles = FolderScanner.ScanForGameExecutables(ScanFolders.ToList());
-
-            foreach (var file in foundFiles)
-            {
-                ScanResults.Add(new ScannedExecutable
+                
+                var config = ConfigManager.LoadConfig();
+                if (config.CustomScanFolders.Contains(selectedFolder))
                 {
-                    IsSelected = false,
-                    FileName = Path.GetFileNameWithoutExtension(file),
-                    FullPath = file // Visibile passandoci sopra con il mouse
-                });
-            }
-            
-            if (ScanResults.Count == 0)
-            {
-                System.Windows.MessageBox.Show("No executables found in the selected folders.");
+                    config.CustomScanFolders.Remove(selectedFolder);
+                    ConfigManager.SaveConfig(config);
+                }
+                
+                PerformScan(); 
             }
         }
 
         private void AddSelected_Click(object sender, RoutedEventArgs e)
         {
-            // Salva solo i file a cui l'utente ha messo la spunta
-            foreach (var item in ScanResults.Where(x => x.IsSelected))
+            foreach (var item in ScanResults)
             {
-                SelectedProcesses.Add(item.FileName);
+                if (item.IsSelected) SelectedExecutables.Add(item);
+                else UnselectedExecutables.Add(item);
             }
-            
             DialogResult = true;
             Close();
         }

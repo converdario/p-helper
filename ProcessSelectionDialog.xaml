@@ -1,4 +1,4 @@
-<Window x:Class="GHelperAutoProfileSwitcher.ProcessSelectionDialog"
+<Window x:Class="PHelper.ProcessSelectionDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Select Process" Height="300" Width="400" WindowStartupLocation="CenterOwner">

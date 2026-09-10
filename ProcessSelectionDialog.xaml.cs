@@ -3,7 +3,7 @@ using System.Windows;
 using System.Linq;
 using Microsoft.Win32;
 
-namespace GHelperAutoProfileSwitcher
+namespace PHelper
 {
     public partial class ProcessSelectionDialog : Window
     {

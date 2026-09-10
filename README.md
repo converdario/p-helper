@@ -18,7 +18,7 @@ A lightweight Windows application that automatically switches [G-Helper](https:/
 ## Installation
 1. Go to the [Releases](../../releases) page.
 2. Download the latest version.
-3. Extract the files and run `GHelperAutoProfileSwitcher.exe`.
+3. Extract the files and run `PHelper.exe`.
 
 ## Building from Source
 To build the project yourself:

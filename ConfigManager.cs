@@ -4,17 +4,19 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace GHelperAutoProfileSwitcher
+namespace PHelper
 {
     public class AppConfig
     {
         public TargetMode DefaultMode { get; set; } = TargetMode.Balanced;
         public List<AppProfile> Profiles { get; set; } = new List<AppProfile>();
+        public List<string> CustomScanFolders { get; set; } = new List<string>();
     }
 
     public static class ConfigManager
     {
-        private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+        private static readonly string AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PHelper");
+        private static readonly string ConfigPath = Path.Combine(AppDataFolder, "config.json");
 
         public static AppConfig LoadConfig()
         {
@@ -57,6 +59,7 @@ namespace GHelperAutoProfileSwitcher
             {
                 var options = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
                 var json = JsonSerializer.Serialize(config, options);
+                Directory.CreateDirectory(AppDataFolder);
                 File.WriteAllText(ConfigPath, json);
             }
             catch (Exception ex)
