@@ -34,63 +34,49 @@ namespace PHelper
 
         private void UpdateTrayIcon()
         {
-            int width = 16;
-            int height = 16;
-            using (Bitmap bitmap = new Bitmap(width, height))
+            System.Drawing.Color accentColor;
+
+            if (_isPaused)
             {
-                using (Graphics g = Graphics.FromImage(bitmap))
-                {
-                    g.Clear(System.Drawing.Color.Transparent);
-                    System.Drawing.Color color = System.Drawing.Color.White;
-                    if (_isPaused)
-                    {
-                        color = System.Drawing.Color.Gray;
-                    }
-                    else
-                    {
-                        switch (_currentMode)
-                        {
-                            case TargetMode.Silent: color = System.Drawing.Color.DeepSkyBlue; break;
-                            case TargetMode.Balanced: color = System.Drawing.Color.White; break;
-                            case TargetMode.Turbo: color = System.Drawing.Color.Red; break;
-                        }
-                    }
-                    using (Brush brush = new SolidBrush(color))
-                    {
-                        g.FillEllipse(brush, 0, 0, 15, 15);
-                    }
-                    using (System.Drawing.Font font = new System.Drawing.Font("Arial", 8, System.Drawing.FontStyle.Bold))
-                    {
-                        string text = _isPaused ? "P" : _currentMode.ToString().Substring(0, 1);
-                        using (Brush textBrush = new SolidBrush(System.Drawing.Color.Black))
-                        {
-                            StringFormat sf = new StringFormat
-                            {
-                                Alignment = StringAlignment.Center,
-                                LineAlignment = StringAlignment.Center
-                            };
-                            g.DrawString(text, font, textBrush, new RectangleF(0, 0, 16, 16), sf);
-                        }
-                    }
-                }
-                
-                IntPtr hIcon = bitmap.GetHicon();
-                System.Drawing.Icon newIcon = System.Drawing.Icon.FromHandle(hIcon);
-
-                var oldIcon = _notifyIcon!.Icon;
-                _notifyIcon.Icon = newIcon;
-                _notifyIcon.Text = $"G-Helper - {_currentMode}";
-
-                if (_currentIconHandle != IntPtr.Zero)
-                {
-                    DestroyIcon(_currentIconHandle);
-                }
-                if (oldIcon != null && oldIcon != SystemIcons.Application)
-                {
-                    oldIcon.Dispose();
-                }
-                _currentIconHandle = hIcon;
+                accentColor = System.Drawing.ColorTranslator.FromHtml("#808080");
             }
+            else
+            {
+                switch (_currentMode)
+                {
+                    case TargetMode.Silent: 
+                        accentColor = System.Drawing.ColorTranslator.FromHtml("#10E659");
+                        break;
+                    case TargetMode.Balanced: 
+                        accentColor = System.Drawing.ColorTranslator.FromHtml("#00A8FF"); 
+                        break;
+                    case TargetMode.Turbo: 
+                        accentColor = System.Drawing.ColorTranslator.FromHtml("#FF4343"); 
+                        break;
+                    default:
+                        accentColor = System.Drawing.ColorTranslator.FromHtml("#FF4343");
+                        break;
+                }
+            }
+
+            System.Drawing.Icon newIcon = IconGenerator.CreateTrayIcon(accentColor);
+
+            var oldIcon = _notifyIcon!.Icon;
+            _notifyIcon.Icon = newIcon;
+            
+            string statusText = _isPaused ? "Paused" : _currentMode.ToString();
+            _notifyIcon.Text = $"PHelper - {statusText}";
+
+            if (_currentIconHandle != IntPtr.Zero)
+            {
+                DestroyIcon(_currentIconHandle);
+            }
+            if (oldIcon != null && oldIcon != SystemIcons.Application)
+            {
+                oldIcon.Dispose();
+            }
+            
+            _currentIconHandle = newIcon.Handle;
         }
 
         public MainWindow()
