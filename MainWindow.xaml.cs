@@ -393,5 +393,18 @@ namespace PHelper
                 SaveConfigSilently();
             }
         }
+
+        private void TitleBar_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                this.DragMove();
+            }
+        }
+
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            this.Hide();
+        }
     }
 }
