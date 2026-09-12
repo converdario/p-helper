@@ -79,6 +79,23 @@ namespace PHelper
             _currentIconHandle = newIcon.Handle;
         }
 
+        private void UpdateCurrentModeUI()
+        {
+            CurrentModeText.Text = _currentMode.ToString();
+
+            // Cambia il colore del testo in base alla modalità
+            string hexColor = _currentMode switch
+            {
+                TargetMode.Silent => "#10E659",
+                TargetMode.Balanced => "#00A8FF",
+                TargetMode.Turbo => "#FF4343",
+                _ => "#00A8FF"
+            };
+            
+            CurrentModeText.Foreground = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hexColor));
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -100,8 +117,11 @@ namespace PHelper
             _timer.Interval = TimeSpan.FromSeconds(5);
             _timer.Tick += Timer_Tick;
             _timer.Start();
-            CurrentModeText.Text = _currentMode.ToString();
+            
+            UpdateCurrentModeUI();
             Timer_Tick(null, EventArgs.Empty);
+
+            ProfilesGrid.SelectedItem = null;
         }
 
         private void ScanFolders_Click(object sender, RoutedEventArgs e)
@@ -131,6 +151,23 @@ namespace PHelper
             }
         }
 
+        // Aggiungi questa per poter arrotondare la ContextMenuStrip
+        [System.Runtime.InteropServices.DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
+        public static extern IntPtr CreateRoundRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect, int nWidthEllipse, int nHeightEllipse);
+
+        // Funzione di supporto per generare le voci con il giusto padding
+        private ToolStripMenuItem CreateMenuItem(string text, EventHandler? onClick = null, bool isTitle = false)
+        {
+            var item = new ToolStripMenuItem(text)
+            {
+                // Aumentato a 5 per creare più spaziatura verticale fra le voci
+                Padding = new Padding(0, 5, 0, 5), 
+                Enabled = !isTitle
+            };
+            if (onClick != null) item.Click += onClick;
+            return item;
+        }
+
         private void SetupTrayIcon()
         {
             _notifyIcon = new NotifyIcon
@@ -146,32 +183,78 @@ namespace PHelper
             };
 
             var contextMenu = new ContextMenuStrip();
-            contextMenu.Items.Add("Open", null, (s, e) => 
-            {
-                Show();
-                WindowState = WindowState.Normal;
-            });
+            contextMenu.Renderer = new DarkContextMenuRenderer();
+            contextMenu.ShowImageMargin = true; 
+            contextMenu.Font = new Font("Segoe UI", 9.5f);
+            contextMenu.Padding = new Padding(0, 5, 0, 5); // Spazio in cima e in fondo al menù
 
-            _pauseMenuItem = new ToolStripMenuItem("Pause Agent");
-            _pauseMenuItem.DropDownItems.Add("1 Hour", null, (s, e) => PauseAgent(1));
-            _pauseMenuItem.DropDownItems.Add("4 Hours", null, (s, e) => PauseAgent(4));
-            _pauseMenuItem.DropDownItems.Add("8 Hours", null, (s, e) => PauseAgent(8));
-            _pauseMenuItem.DropDownItems.Add("24 Hours", null, (s, e) => PauseAgent(24));
-            _pauseMenuItem.DropDownItems.Add("Indefinitely", null, (s, e) => PauseAgent(0));
+            // Arrotonda gli angoli quando il menù si apre
+            contextMenu.Opened += (s, e) => 
+            {
+                contextMenu.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, contextMenu.Width + 1, contextMenu.Height + 1, 12, 12));
+            };
+
+            // COSTRUZIONE MENU
+            contextMenu.Items.Add(CreateMenuItem("Default CPU Profile", null, true));
+            
+            var silentItem = CreateMenuItem("Silet", (s, e) => SetManualMode(TargetMode.Silent));
+            var balancedItem = CreateMenuItem("Balanced", (s, e) => SetManualMode(TargetMode.Balanced));
+            var turboItem = CreateMenuItem("Turbo", (s, e) => SetManualMode(TargetMode.Turbo));
+            
+            contextMenu.Items.Add(silentItem);
+            contextMenu.Items.Add(balancedItem);
+            contextMenu.Items.Add(turboItem);
+
+            // Aggiorna la spunta dinamicamente ogni volta che il menù si apre
+            contextMenu.Opening += (s, e) =>
+            {
+                silentItem.Checked = _currentMode == TargetMode.Silent;
+                balancedItem.Checked = _currentMode == TargetMode.Balanced;
+                turboItem.Checked = _currentMode == TargetMode.Turbo;
+            };
+
+            contextMenu.Items.Add(new ToolStripSeparator());
+
+            _pauseMenuItem = CreateMenuItem("Pause");
+            _pauseMenuItem.DropDownItems.Add(CreateMenuItem("1 Hour", (s, e) => PauseAgent(1)));
+            _pauseMenuItem.DropDownItems.Add(CreateMenuItem("4 Hours", (s, e) => PauseAgent(4)));
+            _pauseMenuItem.DropDownItems.Add(CreateMenuItem("8 Hours", (s, e) => PauseAgent(8)));
+            _pauseMenuItem.DropDownItems.Add(CreateMenuItem("24 Hours", (s, e) => PauseAgent(24)));
+            _pauseMenuItem.DropDownItems.Add(CreateMenuItem("Indefinitely", (s, e) => PauseAgent(0)));
+            
+            // Applica il tema anche al sottomenù "Metti in Pausa"
+            ((ToolStripDropDownMenu)_pauseMenuItem.DropDown).Renderer = new DarkContextMenuRenderer();
+            ((ToolStripDropDownMenu)_pauseMenuItem.DropDown).ShowImageMargin = false; // Nessuna spunta necessaria qui
+            
             contextMenu.Items.Add(_pauseMenuItem);
 
-            _resumeMenuItem = new ToolStripMenuItem("Resume Agent");
-            _resumeMenuItem.Click += (s, e) => ResumeAgent();
+            _resumeMenuItem = CreateMenuItem("Resume", (s, e) => ResumeAgent());
             _resumeMenuItem.Visible = false;
             contextMenu.Items.Add(_resumeMenuItem);
 
-            contextMenu.Items.Add("Exit", null, (s, e) => 
+            contextMenu.Items.Add(new ToolStripSeparator());
+
+            contextMenu.Items.Add(CreateMenuItem("Open P-Helper", (s, e) => 
+            {
+                Show();
+                WindowState = WindowState.Normal;
+            }));
+
+            contextMenu.Items.Add(CreateMenuItem("Exit", (s, e) => 
             {
                 _notifyIcon.Visible = false;
                 Application.Current.Shutdown();
-            });
+            }));
 
             _notifyIcon.ContextMenuStrip = contextMenu;
+        }
+
+        private void SetManualMode(TargetMode mode)
+        {
+            _defaultMode = mode;
+            DefaultModeComboBox.SelectedItem = mode;
+            SaveConfigSilently();
+            Timer_Tick(null, EventArgs.Empty);
         }
 
         private void Timer_Tick(object? sender, EventArgs e)
@@ -209,7 +292,7 @@ namespace PHelper
             if (_currentMode != targetMode)
             {
                 _currentMode = targetMode;
-                CurrentModeText.Text = _currentMode.ToString();
+                UpdateCurrentModeUI(); // <--- Richiama il metodo qui
                 GHelperHotkeys.SetMode(_currentMode);
                 UpdateTrayIcon();
             }
@@ -236,28 +319,63 @@ namespace PHelper
 
         private void AddCurrentApp_Click(object sender, RoutedEventArgs e)
         {
-            var runningApps = Process.GetProcesses()
-                                     .Where(p => !string.IsNullOrEmpty(p.MainWindowTitle))
-                                     .Select(p => new ProcessInfo 
-                                     { 
-                                         ProcessName = p.ProcessName, 
-                                         WindowTitle = p.MainWindowTitle 
-                                     })
-                                     .GroupBy(p => p.ProcessName)
-                                     .Select(g => g.First())
-                                     .OrderBy(p => p.ProcessName)
-                                     .ToList();
+            var runningApps = new List<ProcessInfo>();
+            
+            // Recuperiamo i nomi dei processi già salvati per pre-selezionarli
+            var existingProcessNames = _profiles.Select(p => p.ProcessName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var p in Process.GetProcesses())
+            {
+                if (!string.IsNullOrEmpty(p.MainWindowTitle))
+                {
+                    string path = "";
+                    try { path = p.MainModule?.FileName ?? ""; } catch { }
+
+                    if (!runningApps.Any(x => x.ProcessName.Equals(p.ProcessName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        runningApps.Add(new ProcessInfo 
+                        { 
+                            ProcessName = p.ProcessName, 
+                            WindowTitle = p.MainWindowTitle,
+                            FullPath = path,
+                            // Pre-imposta la spunta se il processo è già nei profili
+                            IsSelected = existingProcessNames.Contains(p.ProcessName) 
+                        });
+                    }
+                }
+            }
+
+            runningApps = runningApps.OrderBy(p => p.ProcessName).ToList();
 
             var dialog = new ProcessSelectionDialog(runningApps);
             dialog.Owner = this;
+            
             if (dialog.ShowDialog() == true)
             {
-                string selectedProcess = dialog.SelectedProcess;
-                if (!string.IsNullOrEmpty(selectedProcess) && !_profiles.Any(p => p.ProcessName.Equals(selectedProcess, StringComparison.OrdinalIgnoreCase)))
+                bool configChanged = false;
+
+                // Aggiunge i processi selezionati che non sono ancora in lista
+                foreach (var selected in dialog.SelectedProcesses)
                 {
-                    _profiles.Add(new AppProfile { ProcessName = selectedProcess, Mode = TargetMode.Turbo });
-                    SaveConfig();
+                    if (!_profiles.Any(p => p.ProcessName.Equals(selected.ProcessName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        _profiles.Add(new AppProfile { ProcessName = selected.ProcessName, FullPath = selected.FullPath, Mode = TargetMode.Turbo });
+                        configChanged = true;
+                    }
                 }
+                
+                // Rimuove i processi deselezionati che erano in lista
+                foreach (var unselected in dialog.UnselectedProcesses)
+                {
+                    var profileToRemove = _profiles.FirstOrDefault(p => p.ProcessName.Equals(unselected.ProcessName, StringComparison.OrdinalIgnoreCase));
+                    if (profileToRemove != null)
+                    {
+                        _profiles.Remove(profileToRemove);
+                        configChanged = true;
+                    }
+                }
+                
+                if (configChanged) SaveConfig();
             }
         }
 
@@ -291,7 +409,7 @@ namespace PHelper
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             e.Cancel = true;
-            Hide();
+            this.Hide();
         }
 
         private void StartWithWindowsCheckBox_Click(object sender, RoutedEventArgs e)
@@ -301,7 +419,7 @@ namespace PHelper
 
             if (rk == null || appPath == null) return; 
 
-            string appName = "PHelper";
+            string appName = "P-Helper";
 
             if (StartWithWindowsCheckBox.IsChecked == true)
             {
@@ -405,6 +523,12 @@ namespace PHelper
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             this.Hide();
+        }
+
+        private void Window_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            ProfilesGrid.SelectedItem = null;
+            System.Windows.Input.Keyboard.ClearFocus();
         }
     }
 }

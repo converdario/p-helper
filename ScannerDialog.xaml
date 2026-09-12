@@ -2,46 +2,64 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:PHelper"
-        Title="Scan Game Folders" Height="450" Width="600" WindowStartupLocation="CenterOwner">
-    <Window.Resources>
-        <local:IconConverter x:Key="IconConverter"/>
-    </Window.Resources>
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+        Title="Scan Game Folders" Height="500" Width="600" WindowStartupLocation="CenterOwner"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize">
+    
+    <Border Background="{StaticResource BgDark}" CornerRadius="8" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            
-            <ListBox Name="FoldersListBox" Grid.Column="0" Height="80" Margin="0,0,10,0"/>
-            
-            <StackPanel Grid.Column="1">
-                <Button Content="Add Folder..." Click="AddFolder_Click" Margin="0,0,0,5" Padding="5"/>
-                <Button Content="Remove" Click="RemoveFolder_Click" Padding="5"/>
+            <!-- Barra del Titolo -->
+            <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
+                <TextBlock Text="Scan Game Folders" Foreground="#CCCCCC" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13" FontWeight="SemiBold"/>
+            </Grid>
+
+            <!-- Sezione Cartelle -->
+            <Grid Grid.Row="1" Margin="15,5,15,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                
+                <ListBox Name="FoldersListBox" Grid.Column="0" Height="100" Margin="0,0,10,0"
+                         Background="{StaticResource BgPanel}" 
+                         BorderBrush="{StaticResource BorderLight}" 
+                         BorderThickness="1" 
+                         Foreground="{StaticResource TextWhite}"/>
+                
+                <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                    <Button Content="Add Folder..." Height="32" Width="100" Click="AddFolder_Click" Margin="0,0,0,8" />
+                    <Button Content="Remove" Height="32" Width="100" Click="RemoveFolder_Click" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Sezione Risultati -->
+            <ListBox x:Name="ResultsListBox" Grid.Row="2" Margin="15,5,15,10"
+                     Background="{StaticResource BgPanel}" 
+                     BorderBrush="{StaticResource BorderLight}" 
+                     BorderThickness="1" 
+                     Foreground="{StaticResource TextWhite}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="4,6">
+                            <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <Image Source="{Binding FullPath, Converter={StaticResource IconConverter}}" Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Controlli in Basso -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="15,0,15,15">
+                <Button Content="Confirm" Width="100" Height="32" Margin="0,0,10,0" Click="AddSelected_Click" />
+                <Button Content="Cancel" Width="80" Height="32" Click="Cancel_Click" />
             </StackPanel>
         </Grid>
-
-        <ListBox x:Name="ResultsListBox" Grid.Row="1" Margin="0,10,0,0">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Margin="2,4,2,4">
-                        <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                        <Image Source="{Binding FullPath, Converter={StaticResource IconConverter}}" Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" />
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button Content="Confirm" Width="100" Margin="0,0,10,0" Click="AddSelected_Click" />
-            <Button Content="Cancel" Width="60" Click="Cancel_Click" />
-        </StackPanel>
-    </Grid>
+    </Border>
 </Window>

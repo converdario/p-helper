@@ -1,58 +1,77 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Linq;
-using Microsoft.Win32;
 
 namespace PHelper
 {
     public partial class ProcessSelectionDialog : Window
     {
-        public string SelectedProcess { get; private set; } = string.Empty;
+        public List<ProcessInfo> SelectedProcesses { get; private set; } = new List<ProcessInfo>();
+        public List<ProcessInfo> UnselectedProcesses { get; private set; } = new List<ProcessInfo>();
 
         public ProcessSelectionDialog(List<ProcessInfo> processes)
         {
             InitializeComponent();
             ProcessListBox.ItemsSource = processes;
-            ProcessListBox.DisplayMemberPath = "DisplayName";
         }
 
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            
             openFileDialog.Filter = "Executable files (*.exe)|*.exe";
             openFileDialog.Title = "Select executable file";
 
             if (openFileDialog.ShowDialog() == true)
             {
-                SelectedProcess = System.IO.Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                SelectedProcesses.Add(new ProcessInfo 
+                { 
+                    ProcessName = System.IO.Path.GetFileNameWithoutExtension(openFileDialog.FileName),
+                    FullPath = openFileDialog.FileName,
+                    IsSelected = true
+                });
                 DialogResult = true;
             }
         }
 
         private void Ok_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessListBox.SelectedItem is ProcessInfo info)
+            // Separiamo chi ha la spunta e chi non ce l'ha
+            if (ProcessListBox.ItemsSource is List<ProcessInfo> items)
             {
-                SelectedProcess = info.ProcessName;
-                DialogResult = true;
+                foreach (var item in items)
+                {
+                    if (item.IsSelected)
+                        SelectedProcesses.Add(item);
+                    else
+                        UnselectedProcesses.Add(item);
+                }
             }
-            else
-            {
-                System.Windows.MessageBox.Show("Please select a process.");
-            }
+            
+            // Chiude senza errori anche se non si è selezionato nulla
+            DialogResult = true;
+            this.Close();
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
+            this.Close();
+        }
+
+        private void TitleBar_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                this.DragMove();
+            }
         }
     }
 
     public class ProcessInfo
     {
+        public bool IsSelected { get; set; }
         public string ProcessName { get; set; } = string.Empty;
         public string WindowTitle { get; set; } = string.Empty;
-        public string DisplayName => $"{ProcessName} - {WindowTitle}";
+        public string FullPath { get; set; } = string.Empty; 
     }
 }
