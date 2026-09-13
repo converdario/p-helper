@@ -20,9 +20,8 @@ A lightweight, automated companion utility for G-Helper. P-Helper seamlessly swi
 ## Installation & Usage
 
 1. Download the latest version from the [Releases](https://github.com/dario/p-helper/releases) page.
-2. Extract the archive into a folder of your choice (it is fully portable).
-3. Run `PHelper.exe`.
-4. Add your favorite games or demanding applications, select your preferred profiles, and let the app handle the background switching automatically.
+2. Run `PHelper.exe`.
+3. Add your favorite games or demanding applications, select your preferred profiles, and let the app handle the background switching automatically.
 
 ## Acknowledgments
 
