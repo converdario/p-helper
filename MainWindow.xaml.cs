@@ -12,6 +12,8 @@ using Microsoft.Win32;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 using ComboBox = System.Windows.Controls.ComboBox;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PHelper
 {
@@ -19,15 +21,67 @@ namespace PHelper
     {
         private ObservableCollection<AppProfile> _profiles;
         private TargetMode _defaultMode = TargetMode.Balanced;
-        private DispatcherTimer _timer;
         private NotifyIcon? _notifyIcon;
         private TargetMode _currentMode = TargetMode.Balanced;
         private IntPtr _currentIconHandle = IntPtr.Zero;
-
-        private bool _isPaused = false;
-        private DateTime? _pauseUntil = null;
         private ToolStripMenuItem? _pauseMenuItem;
         private ToolStripMenuItem? _resumeMenuItem;
+        private CancellationTokenSource? _saveCts;
+        private AgentManager _agent;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            var config = ConfigManager.LoadConfig();
+            _defaultMode = config.DefaultMode;
+            _profiles = new ObservableCollection<AppProfile>(config.Profiles);
+            ProfilesGrid.ItemsSource = _profiles;
+            _profiles.CollectionChanged += (s, e) => RequestSaveConfig();
+
+            DefaultModeComboBox.ItemsSource = Enum.GetValues(typeof(TargetMode));
+            DefaultModeComboBox.SelectedItem = _defaultMode;
+
+            // Inizializza l'Agent ma NON lo fa partire subito
+            _agent = new AgentManager();
+            _agent.ModeChanged += OnAgentModeChanged;
+            _agent.PauseStateUpdated += UpdatePauseUI;
+            _agent.SyncData(_profiles, _defaultMode);
+
+            SetupTrayIcon();
+            
+            RegistryKey? rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false);
+            StartWithWindowsCheckBox.IsChecked = rk?.GetValue("PHelper") != null;
+
+            UpdateCurrentModeUI();
+            ProfilesGrid.SelectedItem = null;
+
+            // 1. Intercetta l'avvio invisibile di Windows bloccando il rendering grafico
+            string[] args = Environment.GetCommandLineArgs();
+            if (args.Contains("-hidden", StringComparer.OrdinalIgnoreCase))
+            {
+                this.WindowState = WindowState.Minimized;
+                this.Hide();
+            }
+
+            // 2. Ritarda la partenza del motore di scansione di 3 secondi
+            _ = Task.Delay(3000).ContinueWith(_ =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _agent.Start();
+                    _ = _agent.PerformCheckAsync();
+                });
+            });
+        }
+
+        private void OnAgentModeChanged(TargetMode newMode)
+        {
+            _currentMode = newMode;
+            UpdateCurrentModeUI();
+            GHelperHotkeys.SetMode(_currentMode);
+            UpdateTrayIcon();
+        }
 
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         extern static bool DestroyIcon(IntPtr handle);
@@ -36,7 +90,10 @@ namespace PHelper
         {
             System.Drawing.Color accentColor;
 
-            if (_isPaused)
+            // Legge lo stato di pausa direttamente dall'Agent
+            bool isPaused = _agent?.IsPaused == true;
+
+            if (isPaused)
             {
                 accentColor = System.Drawing.ColorTranslator.FromHtml("#808080");
             }
@@ -64,7 +121,7 @@ namespace PHelper
             var oldIcon = _notifyIcon!.Icon;
             _notifyIcon.Icon = newIcon;
             
-            string statusText = _isPaused ? "Paused" : _currentMode.ToString();
+            string statusText = isPaused ? "Paused" : _currentMode.ToString();
             _notifyIcon.Text = $"PHelper - {statusText}";
 
             if (_currentIconHandle != IntPtr.Zero)
@@ -96,34 +153,6 @@ namespace PHelper
                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hexColor));
         }
 
-        public MainWindow()
-        {
-            InitializeComponent();
-
-            var config = ConfigManager.LoadConfig();
-            _defaultMode = config.DefaultMode;
-            _profiles = new ObservableCollection<AppProfile>(config.Profiles);
-            ProfilesGrid.ItemsSource = _profiles;
-            _profiles.CollectionChanged += (s, e) => SaveConfigSilently();
-
-            DefaultModeComboBox.ItemsSource = Enum.GetValues(typeof(TargetMode));
-            DefaultModeComboBox.SelectedItem = _defaultMode;
-
-            SetupTrayIcon();
-            RegistryKey? rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false);
-            StartWithWindowsCheckBox.IsChecked = rk?.GetValue("PHelper") != null;
-
-            _timer = new DispatcherTimer();
-            _timer.Interval = TimeSpan.FromSeconds(5);
-            _timer.Tick += Timer_Tick;
-            _timer.Start();
-            
-            UpdateCurrentModeUI();
-            Timer_Tick(null, EventArgs.Empty);
-
-            ProfilesGrid.SelectedItem = null;
-        }
-
         private void ScanFolders_Click(object sender, RoutedEventArgs e)
         {
             var currentProcesses = _profiles.Select(p => p.ProcessName).ToList();
@@ -147,7 +176,7 @@ namespace PHelper
                     if (profileToRemove != null) _profiles.Remove(profileToRemove);
                 }
                 
-                SaveConfigSilently();
+                RequestSaveConfig();
             }
         }
 
@@ -253,48 +282,13 @@ namespace PHelper
         {
             _defaultMode = mode;
             DefaultModeComboBox.SelectedItem = mode;
-            SaveConfigSilently();
-            Timer_Tick(null, EventArgs.Empty);
-        }
-
-        private void Timer_Tick(object? sender, EventArgs e)
-        {
-            if (_isPaused)
-            {
-                if (_pauseUntil.HasValue && DateTime.Now >= _pauseUntil.Value)
-                {
-                    ResumeAgent();
-                }
-                else
-                {
-                    if (_pauseUntil.HasValue)
-                    {
-                        var remaining = _pauseUntil.Value - DateTime.Now;
-                        PauseDurationComboBox.Text = $"{(int)remaining.TotalHours:D2}h {remaining.Minutes:D2}m";
-                    }
-                    return;
-                }
-            }
-
-            var runningProcesses = Process.GetProcesses().Select(p => p.ProcessName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            RequestSaveConfig();
             
-            TargetMode targetMode = _defaultMode;
-
-            foreach (var profile in _profiles)
+            // Aggiorna l'Agent e forza un check immediato
+            if (_agent != null)
             {
-                if (runningProcesses.Contains(profile.ProcessName))
-                {
-                    targetMode = profile.Mode;
-                    if (targetMode == TargetMode.Turbo) break;
-                }
-            }
-
-            if (_currentMode != targetMode)
-            {
-                _currentMode = targetMode;
-                UpdateCurrentModeUI(); // <--- Richiama il metodo qui
-                GHelperHotkeys.SetMode(_currentMode);
-                UpdateTrayIcon();
+                _agent.SyncData(_profiles, _defaultMode);
+                _ = _agent.PerformCheckAsync();
             }
         }
 
@@ -303,18 +297,8 @@ namespace PHelper
             if (DefaultModeComboBox.SelectedItem is TargetMode selectedMode)
             {
                 _defaultMode = selectedMode;
-                SaveConfigSilently();
+                RequestSaveConfig();
             }
-        }
-
-        private void SaveConfig()
-        {
-            var config = new AppConfig
-            {
-                DefaultMode = _defaultMode,
-                Profiles = _profiles.ToList()
-            };
-            ConfigManager.SaveConfig(config);
         }
 
         private void AddCurrentApp_Click(object sender, RoutedEventArgs e)
@@ -375,7 +359,7 @@ namespace PHelper
                     }
                 }
                 
-                if (configChanged) SaveConfig();
+                if (configChanged) RequestSaveConfig();
             }
         }
 
@@ -384,18 +368,40 @@ namespace PHelper
             if ((sender as System.Windows.Controls.Button)?.DataContext is AppProfile profile)
             {
                 _profiles.Remove(profile);
-                SaveConfig();
+                RequestSaveConfig();
             }
         }
 
-        private void SaveConfigSilently()
+        private async void RequestSaveConfig()
         {
-            if (_profiles == null) return; 
-            var config = ConfigManager.LoadConfig();
-            if (config == null) return; 
-            config.DefaultMode = _defaultMode;
-            config.Profiles = _profiles.ToList();
-            ConfigManager.SaveConfig(config);
+            // Controllo di sicurezza: sincronizza i dati solo se l'agent è già stato caricato
+            if (_agent != null && _profiles != null)
+            {
+                _agent.SyncData(_profiles, _defaultMode);
+            }
+
+            _saveCts?.Cancel();
+            _saveCts = new CancellationTokenSource();
+            var token = _saveCts.Token;
+
+            try
+            {
+                await Task.Delay(1000, token);
+
+                if (_profiles == null) return;
+                
+                var config = new AppConfig
+                {
+                    DefaultMode = _defaultMode,
+                    Profiles = _profiles.ToList()
+                };
+
+                await Task.Run(() => ConfigManager.SaveConfig(config));
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignorato correttamente
+            }
         }
 
         private void Window_StateChanged(object sender, EventArgs e)
@@ -436,39 +442,31 @@ namespace PHelper
         private void PauseAgent(double hours)
         {
             _lastSelectedPauseIndex = PauseDurationComboBox.SelectedIndex;
-            _isPaused = true;
-            if (hours > 0)
-                _pauseUntil = DateTime.Now.AddHours(hours);
-            else
-                _pauseUntil = null;
-            
-            UpdatePauseUI();
+            _agent.Pause(hours);
             UpdateTrayIcon();
         }
 
         private void ResumeAgent()
         {
-            _isPaused = false;
-            _pauseUntil = null;
-            
-            UpdatePauseUI();
+            _agent.Resume();
             UpdateTrayIcon();
             PauseDurationComboBox.SelectedIndex = _lastSelectedPauseIndex;
         }
 
         private void UpdatePauseUI()
         {
-            if (_pauseMenuItem != null) _pauseMenuItem.Visible = !_isPaused;
-            if (_resumeMenuItem != null) _resumeMenuItem.Visible = _isPaused;
+            if (_pauseMenuItem != null) _pauseMenuItem.Visible = !_agent.IsPaused;
+            if (_resumeMenuItem != null) _resumeMenuItem.Visible = _agent.IsPaused;
             
-            if (_isPaused)
+            if (_agent.IsPaused)
             {
                 PauseResumeButton.Content = "Resume";
                 PauseDurationComboBox.IsEditable = true;
                 PauseDurationComboBox.IsReadOnly = true;
-                if (_pauseUntil.HasValue)
+                
+                if (_agent.PauseUntil.HasValue)
                 {
-                    var remaining = _pauseUntil.Value - DateTime.Now;
+                    var remaining = _agent.PauseUntil.Value - DateTime.Now;
                     PauseDurationComboBox.Text = $"{(int)remaining.TotalHours:D2}h {remaining.Minutes:D2}m";
                 }
                 else
@@ -486,7 +484,7 @@ namespace PHelper
 
         private void PauseResumeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isPaused)
+            if (_agent != null && _agent.IsPaused)
             {
                 ResumeAgent();
             }
@@ -508,7 +506,7 @@ namespace PHelper
         {
             if (sender is ComboBox cb && cb.IsLoaded)
             {
-                SaveConfigSilently();
+                RequestSaveConfig();
             }
         }
 
