@@ -1,52 +1,34 @@
-# G-Helper Auto Profile Switcher
+# P-Helper
 
-A lightweight Windows application that automatically switches [G-Helper](https://github.com/seerge/g-helper) profiles based on the currently running processes.
+A lightweight, automated companion utility for G-Helper. P-Helper seamlessly switches your performance profile based on the active application.
 
 ## Features
-- **Automatic Profile Switching:** Seamlessly switch to a specific G-Helper profile (e.g., Turbo, Balanced, Eco) when a designated application (like a game) is running.
-- **Process Detection:** Periodically scans running processes to apply the correct profile.
-- **System Tray Integration:** Runs quietly in the background, accessible via the system tray.
-- **Start with Windows:** Easily configure the app to launch automatically when you boot your PC.
-- **Simple UI:** Add, remove, and manage your app profiles with an intuitive graphical interface.
-- **Pause Timer:** Allow to Temporary / Permanatly pause the agent from working without closing it
 
-## Requirements
-- Windows OS
-- .NET 8.0 Desktop Runtime
-- [G-Helper](https://github.com/seerge/g-helper) installed and running.
+* **App-Specific Profiles:** Assign distinct G-Helper performance profiles (Silent, Balanced, Turbo) to individual games or programs.
+* **Default Profile:** Set a fallback system profile that automatically activates when no monitored applications are running.
+* **Smart "Add App":** Quickly add programs by picking from a list of currently running processes, or browse your disk for a specific `.exe` file.
+* **Batch Folder Scan:** Effortlessly scan entire directories to find and add multiple executables at once. You can also define and save your custom default folders for faster future scans.
+* **System Tray Integration:** Control the application rapidly straight from your taskbar's system tray context menu.
+* **Pause Monitoring:** Temporarily suspend automatic profile switching for a specific duration or indefinitely when you need manual control.
+* **Run on Startup:** Launch the app automatically and silently in the background when Windows starts.
 
-## Installation
-1. Go to the [Releases](../../releases) page.
-2. Download the latest version.
-3. Extract the files and run `PHelper.exe`.
+## Prerequisites
 
-## Building from Source
-To build the project yourself:
+* **[G-Helper](https://github.com/seerge/g-helper):** Must be installed and running on your system.
+* **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download):** Required to run the program (will be auto-prompted to install if missing). *Note: Since G-Helper also relies on .NET 10 Desktop Runtime, you may already have it installed.*
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Lunarstar/GHelper-Auto-Profile-Switcher.git
-   ```
-2. Open the project in Visual Studio or use the .NET CLI:
-   ```bash
-   dotnet build --configuration Release
-   ```
-3. The executable will be located in the `bin/Release/net8.0-windows/` folder.
+## Installation & Usage
 
-## Usage
-1. Launch the application.
-2. Click **Add Current App** to select a currently running application and assign a target mode (e.g., Turbo, Silent, Balanced).
-3. Check the **Start with Windows** option to ensure it runs continuously in the background.
-4. Minimize the application to the system tray to keep it out of the way.
+1. Download the latest version from the [Releases](https://github.com/dario/p-helper/releases) page.
+2. Extract the archive into a folder of your choice (it is fully portable).
+3. Run `PHelper.exe`.
+4. Add your favorite games or demanding applications, select your preferred profiles, and let the app handle the background switching automatically.
 
-## ScreenShots
-<img width="734" height="555" alt="image" src="https://github.com/user-attachments/assets/6bb8905e-22fd-43d8-94c6-1fd8c360632e" />
+## Acknowledgments
 
-<img width="734" height="555" alt="image" src="https://github.com/user-attachments/assets/6c6967ad-754c-413b-a30e-1ad01056efd4" />
-
-
-
-## Thx Gemini! : D
+Maintained by [converdario](https://github.com/converdario).  
+Based on the [original project](https://github.com/LunarstarFurry/GHelper-Auto-Profile-Switcher) by [LunarstarFurry](https://github.com/LunarstarFurry).
 
 ## License
-MIT License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details.
