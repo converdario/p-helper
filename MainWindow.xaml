@@ -20,9 +20,39 @@
             
             <!-- Barra del Titolo -->
             <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
-                <TextBlock Text="P-Helper — Your G-Helper companion" Foreground="#CCCCCC" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13"/>
-                <!-- Solo il tasto di chiusura, ancorato a destra -->
-                <Button Style="{StaticResource CloseButtonStyle}" Width="45" HorizontalAlignment="Right" Click="Close_Click"/>
+                
+                <!-- Contenitore di sinistra: Pulsante Info + Titolo -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,0">
+                    
+                    <!-- Pulsante Info -->
+                    <Button Width="28" Height="28" Background="Transparent" BorderThickness="0" Click="Info_Click" ToolTip="About P-Helper" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBlock Text="&#xE946;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI Symbol" Foreground="#AAAAAA" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="14">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#2A2A2A"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    
+                    <!-- Titolo dell'App -->
+                    <TextBlock Text="P-Helper — Your G-Helper companion" Foreground="#CCCCCC" VerticalAlignment="Center" FontSize="13"/>
+                </StackPanel>
+
+                <!-- Tasto di chiusura, isolato e ancorato in alto a destra -->
+                <Button Style="{StaticResource CloseButtonStyle}" Width="45" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top" Click="Close_Click"/>
             </Grid>
 
             <!-- Contenuto Centrale -->
@@ -78,17 +108,20 @@
                     
                     <StackPanel Orientation="Horizontal">
                         <CheckBox x:Name="StartWithWindowsCheckBox" Content="Run on Startup" VerticalAlignment="Center" Margin="0,0,20,0" Click="StartWithWindowsCheckBox_Click"/>
-                        <ComboBox Name="PauseDurationComboBox" Width="120" Margin="0,0,10,0" Height="28">
+                        <!-- Altezza 32 per allineamento -->
+                        <ComboBox Name="PauseDurationComboBox" Width="120" Margin="0,0,10,0" Height="32" VerticalAlignment="Center">
                             <ComboBoxItem Content="1 Hour" Tag="1" />
                             <ComboBoxItem Content="4 Hours" Tag="4" />
                             <ComboBoxItem Content="8 Hours" Tag="8" />
                             <ComboBoxItem Content="24 Hours" Tag="24" />
                             <ComboBoxItem Content="Indefinitely" Tag="0" IsSelected="True" />
                         </ComboBox>
-                        <Button Name="PauseResumeButton" Content="Pause" Width="80" Height="28" Click="PauseResumeButton_Click" />
+                        <!-- Altezza 32 per allineamento -->
+                        <Button Name="PauseResumeButton" Content="Pause" Width="80" Height="32" VerticalAlignment="Center" Click="PauseResumeButton_Click" />
                     </StackPanel>
                 </StackPanel>
                 
+                <!-- Altezza 32 per tutti i bottoni di destra e allineamento al fondo del contenitore -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1" VerticalAlignment="Bottom">
                     <Button Content="Add App" Width="90" Height="32" Click="AddCurrentApp_Click" Margin="0,0,10,0"/>
                     <Button Content="Scan Folders" Width="100" Height="32" Click="ScanFolders_Click"/>

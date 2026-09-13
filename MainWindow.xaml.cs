@@ -226,7 +226,7 @@ namespace PHelper
             // COSTRUZIONE MENU
             contextMenu.Items.Add(CreateMenuItem("Default CPU Profile", null, true));
             
-            var silentItem = CreateMenuItem("Silet", (s, e) => SetManualMode(TargetMode.Silent));
+            var silentItem = CreateMenuItem("Silent", (s, e) => SetManualMode(TargetMode.Silent));
             var balancedItem = CreateMenuItem("Balanced", (s, e) => SetManualMode(TargetMode.Balanced));
             var turboItem = CreateMenuItem("Turbo", (s, e) => SetManualMode(TargetMode.Turbo));
             
@@ -527,6 +527,14 @@ namespace PHelper
         {
             ProfilesGrid.SelectedItem = null;
             System.Windows.Input.Keyboard.ClearFocus();
+        }
+
+        private void Info_Click(object sender, RoutedEventArgs e)
+        {
+            var aboutWindow = new AboutWindow();
+            
+            aboutWindow.Owner = this; 
+            aboutWindow.ShowDialog();
         }
     }
 }

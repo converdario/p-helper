@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <Resource Include="favicon.ico" />
+    <Resource Include="LunarstarFurry.png" />
   </ItemGroup>
 
 </Project>
