@@ -1,10 +1,9 @@
 <Window x:Class="PHelper.AboutWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="About P-Helper" Height="350" Width="420" WindowStartupLocation="CenterOwner"
+        Title="About P-Helper" Height="400" Width="420" WindowStartupLocation="CenterOwner"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize">
 
-    <!-- Stile per nascondere il blu dei link e renderli bianchi -->
     <Window.Resources>
         <Style x:Key="WhiteHyperlink" TargetType="Hyperlink">
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
@@ -20,29 +19,36 @@
     <Border Background="{StaticResource BgDark}" CornerRadius="8" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
         <Grid Margin="20">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" /> <!-- Contenuto centrale -->
-                <RowDefinition Height="Auto" /> <!-- Bottone in basso -->
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" VerticalAlignment="Center">
+                
                 <TextBlock FontSize="26" FontWeight="Bold" HorizontalAlignment="Center">
                     <Hyperlink NavigateUri="https://github.com/converdario/p-helper" RequestNavigate="Hyperlink_RequestNavigate" Style="{StaticResource WhiteHyperlink}">
                         P-Helper
                     </Hyperlink>
                 </TextBlock>
-                <TextBlock Text="Version 1.0.0" Foreground="#888888" FontSize="12" HorizontalAlignment="Center" Margin="0,2,0,5"/>
+                <TextBlock Text="Version 1.0.0" Foreground="#888888" FontSize="12" HorizontalAlignment="Center" Margin="0,2,0,20"/>
                 
-                <TextBlock Foreground="#CCCCCC" TextAlignment="Center" Margin="0,0,0,25">
-                    Your G-Helper companion<LineBreak/>
-                    <Run Foreground="#888888" FontSize="12">Maintained by</Run> 
-                    <Hyperlink NavigateUri="https://github.com/converdario" RequestNavigate="Hyperlink_RequestNavigate" Style="{StaticResource WhiteHyperlink}">
-                        converdario
-                    </Hyperlink>
-                </TextBlock>
+                <TextBlock Text="Your G-Helper companion" Foreground="#CCCCCC" TextAlignment="Center" Margin="0,0,0,25"/>
+                
+                <TextBlock Text="Maintained by:" Foreground="#888888" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Image Source="pack://application:,,,/converdario.png" Width="32" Height="32" Margin="0,0,15,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    
+                    <TextBlock FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center">
+                        <Hyperlink NavigateUri="https://github.com/converdario" RequestNavigate="Hyperlink_RequestNavigate" Style="{StaticResource WhiteHyperlink}">
+                            converdario
+                        </Hyperlink>
+                    </TextBlock>
+                </StackPanel>
 
-                <Separator Background="#2A2A2A" Margin="40,0,40,25"/>
+                <Separator Background="#2A2A2A" Margin="40,25,40,25"/>
 
-                <TextBlock Text="Based on the original project by:" Foreground="#888888" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                <TextBlock Text="Based on the original project by:" Foreground="#888888" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <Image Source="pack://application:,,,/LunarstarFurry.png" Width="32" Height="32" Margin="0,0,15,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -53,6 +59,7 @@
                         </Hyperlink>
                     </TextBlock>
                 </StackPanel>
+                
             </StackPanel>
 
             <Button Grid.Row="1" Content="Close" Width="80" Height="32" HorizontalAlignment="Right" Click="Close_Click" />

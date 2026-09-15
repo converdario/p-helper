@@ -13,7 +13,6 @@ namespace PHelper
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            // Apre il link nel browser predefinito di Windows
             Process.Start(new ProcessStartInfo
             {
                 FileName = e.Uri.AbsoluteUri,

@@ -14,12 +14,10 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Barra del Titolo -->
             <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
                 <TextBlock Text="Scan Game Folders" Foreground="#CCCCCC" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13" FontWeight="SemiBold"/>
             </Grid>
 
-            <!-- Sezione Cartelle -->
             <Grid Grid.Row="1" Margin="15,5,15,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -38,7 +36,6 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Sezione Risultati -->
             <ListBox x:Name="ResultsListBox" Grid.Row="2" Margin="15,5,15,10"
                      Background="{StaticResource BgPanel}" 
                      BorderBrush="{StaticResource BorderLight}" 
@@ -55,7 +52,6 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <!-- Controlli in Basso -->
             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="15,0,15,15">
                 <Button Content="Confirm" Width="100" Height="32" Margin="0,0,10,0" Click="AddSelected_Click" />
                 <Button Content="Cancel" Width="80" Height="32" Click="Cancel_Click" />

@@ -17,12 +17,10 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             
-            <!-- Barra del Titolo -->
             <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
                 <TextBlock Text="Select Process" Foreground="#CCCCCC" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13" FontWeight="SemiBold"/>
             </Grid>
 
-            <!-- Contenuto Centrale con Checkbox -->
             <ListBox Name="ProcessListBox" Grid.Row="1" Margin="15,5,15,10" 
                      Background="{StaticResource BgPanel}" 
                      BorderBrush="{StaticResource BorderLight}" 
@@ -44,7 +42,6 @@
                 </ListBox.ItemTemplate>
             </ListBox>
             
-            <!-- Controlli in Basso -->
             <Grid Grid.Row="2" Margin="15,0,15,15">
                 <Button Content="Browse..." Width="90" Height="32" HorizontalAlignment="Left" Click="BrowseButton_Click" />
                 

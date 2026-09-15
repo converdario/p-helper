@@ -14,11 +14,9 @@ namespace PHelper
         private DateTime? _pauseUntil = null;
         private TargetMode _currentMode = TargetMode.Balanced;
         
-        // Copie di sicurezza dei dati passati dalla UI
         private List<AppProfile> _profilesSnapshot = new();
         private TargetMode _defaultMode = TargetMode.Balanced;
 
-        // Eventi per comunicare con MainWindow
         public event Action<TargetMode>? ModeChanged;
         public event Action? PauseStateUpdated;
 
@@ -31,7 +29,6 @@ namespace PHelper
 
         public void Start() => _timer.Start();
 
-        // Riceve i dati aggiornati dalla UI in modo sicuro
         public void SyncData(IEnumerable<AppProfile> profiles, TargetMode defaultMode)
         {
             _profilesSnapshot = profiles.ToList();
@@ -65,7 +62,7 @@ namespace PHelper
                 }
                 else
                 {
-                    PauseStateUpdated?.Invoke(); // Aggiorna il testo del countdown nella UI
+                    PauseStateUpdated?.Invoke();
                     return;
                 }
             }

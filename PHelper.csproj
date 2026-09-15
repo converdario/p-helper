@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <Resource Include="favicon.ico" />
+    <Resource Include="converdario.png" />
     <Resource Include="LunarstarFurry.png" />
   </ItemGroup>
 

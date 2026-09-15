@@ -35,7 +35,6 @@ namespace PHelper
 
         private void Ok_Click(object sender, RoutedEventArgs e)
         {
-            // Separiamo chi ha la spunta e chi non ce l'ha
             if (ProcessListBox.ItemsSource is List<ProcessInfo> items)
             {
                 foreach (var item in items)
@@ -47,7 +46,6 @@ namespace PHelper
                 }
             }
             
-            // Chiude senza errori anche se non si è selezionato nulla
             DialogResult = true;
             this.Close();
         }

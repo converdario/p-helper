@@ -42,7 +42,6 @@ namespace PHelper
             DefaultModeComboBox.ItemsSource = Enum.GetValues(typeof(TargetMode));
             DefaultModeComboBox.SelectedItem = _defaultMode;
 
-            // Inizializza l'Agent ma NON lo fa partire subito
             _agent = new AgentManager();
             _agent.ModeChanged += OnAgentModeChanged;
             _agent.PauseStateUpdated += UpdatePauseUI;
@@ -56,7 +55,6 @@ namespace PHelper
             UpdateCurrentModeUI();
             ProfilesGrid.SelectedItem = null;
 
-            // 1. Intercetta l'avvio invisibile di Windows bloccando il rendering grafico
             string[] args = Environment.GetCommandLineArgs();
             if (args.Contains("-hidden", StringComparer.OrdinalIgnoreCase))
             {
@@ -64,7 +62,6 @@ namespace PHelper
                 this.Hide();
             }
 
-            // 2. Ritarda la partenza del motore di scansione di 3 secondi
             _ = Task.Delay(3000).ContinueWith(_ =>
             {
                 Dispatcher.Invoke(() =>
@@ -90,7 +87,6 @@ namespace PHelper
         {
             System.Drawing.Color accentColor;
 
-            // Legge lo stato di pausa direttamente dall'Agent
             bool isPaused = _agent?.IsPaused == true;
 
             if (isPaused)
@@ -140,7 +136,6 @@ namespace PHelper
         {
             CurrentModeText.Text = _currentMode.ToString();
 
-            // Cambia il colore del testo in base alla modalità
             string hexColor = _currentMode switch
             {
                 TargetMode.Silent => "#10E659",
@@ -180,16 +175,13 @@ namespace PHelper
             }
         }
 
-        // Aggiungi questa per poter arrotondare la ContextMenuStrip
         [System.Runtime.InteropServices.DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
         public static extern IntPtr CreateRoundRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect, int nWidthEllipse, int nHeightEllipse);
 
-        // Funzione di supporto per generare le voci con il giusto padding
         private ToolStripMenuItem CreateMenuItem(string text, EventHandler? onClick = null, bool isTitle = false)
         {
             var item = new ToolStripMenuItem(text)
             {
-                // Aumentato a 5 per creare più spaziatura verticale fra le voci
                 Padding = new Padding(0, 5, 0, 5), 
                 Enabled = !isTitle
             };
@@ -215,15 +207,13 @@ namespace PHelper
             contextMenu.Renderer = new DarkContextMenuRenderer();
             contextMenu.ShowImageMargin = true; 
             contextMenu.Font = new Font("Segoe UI", 9.5f);
-            contextMenu.Padding = new Padding(0, 5, 0, 5); // Spazio in cima e in fondo al menù
+            contextMenu.Padding = new Padding(0, 5, 0, 5);
 
-            // Arrotonda gli angoli quando il menù si apre
             contextMenu.Opened += (s, e) => 
             {
                 contextMenu.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, contextMenu.Width + 1, contextMenu.Height + 1, 12, 12));
             };
 
-            // COSTRUZIONE MENU
             contextMenu.Items.Add(CreateMenuItem("Default CPU Profile", null, true));
             
             var silentItem = CreateMenuItem("Silent", (s, e) => SetManualMode(TargetMode.Silent));
@@ -234,7 +224,6 @@ namespace PHelper
             contextMenu.Items.Add(balancedItem);
             contextMenu.Items.Add(turboItem);
 
-            // Aggiorna la spunta dinamicamente ogni volta che il menù si apre
             contextMenu.Opening += (s, e) =>
             {
                 silentItem.Checked = _currentMode == TargetMode.Silent;
@@ -251,9 +240,8 @@ namespace PHelper
             _pauseMenuItem.DropDownItems.Add(CreateMenuItem("24 Hours", (s, e) => PauseAgent(24)));
             _pauseMenuItem.DropDownItems.Add(CreateMenuItem("Indefinitely", (s, e) => PauseAgent(0)));
             
-            // Applica il tema anche al sottomenù "Metti in Pausa"
             ((ToolStripDropDownMenu)_pauseMenuItem.DropDown).Renderer = new DarkContextMenuRenderer();
-            ((ToolStripDropDownMenu)_pauseMenuItem.DropDown).ShowImageMargin = false; // Nessuna spunta necessaria qui
+            ((ToolStripDropDownMenu)_pauseMenuItem.DropDown).ShowImageMargin = false;
             
             contextMenu.Items.Add(_pauseMenuItem);
 
@@ -284,7 +272,6 @@ namespace PHelper
             DefaultModeComboBox.SelectedItem = mode;
             RequestSaveConfig();
             
-            // Aggiorna l'Agent e forza un check immediato
             if (_agent != null)
             {
                 _agent.SyncData(_profiles, _defaultMode);
@@ -305,7 +292,6 @@ namespace PHelper
         {
             var runningApps = new List<ProcessInfo>();
             
-            // Recuperiamo i nomi dei processi già salvati per pre-selezionarli
             var existingProcessNames = _profiles.Select(p => p.ProcessName).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             foreach (var p in Process.GetProcesses())
@@ -322,7 +308,6 @@ namespace PHelper
                             ProcessName = p.ProcessName, 
                             WindowTitle = p.MainWindowTitle,
                             FullPath = path,
-                            // Pre-imposta la spunta se il processo è già nei profili
                             IsSelected = existingProcessNames.Contains(p.ProcessName) 
                         });
                     }
@@ -338,7 +323,6 @@ namespace PHelper
             {
                 bool configChanged = false;
 
-                // Aggiunge i processi selezionati che non sono ancora in lista
                 foreach (var selected in dialog.SelectedProcesses)
                 {
                     if (!_profiles.Any(p => p.ProcessName.Equals(selected.ProcessName, StringComparison.OrdinalIgnoreCase)))
@@ -348,7 +332,6 @@ namespace PHelper
                     }
                 }
                 
-                // Rimuove i processi deselezionati che erano in lista
                 foreach (var unselected in dialog.UnselectedProcesses)
                 {
                     var profileToRemove = _profiles.FirstOrDefault(p => p.ProcessName.Equals(unselected.ProcessName, StringComparison.OrdinalIgnoreCase));
@@ -374,7 +357,6 @@ namespace PHelper
 
         private async void RequestSaveConfig()
         {
-            // Controllo di sicurezza: sincronizza i dati solo se l'agent è già stato caricato
             if (_agent != null && _profiles != null)
             {
                 _agent.SyncData(_profiles, _defaultMode);
@@ -398,10 +380,7 @@ namespace PHelper
 
                 await Task.Run(() => ConfigManager.SaveConfig(config));
             }
-            catch (TaskCanceledException)
-            {
-                // Ignorato correttamente
-            }
+            catch (TaskCanceledException){}
         }
 
         private void Window_StateChanged(object sender, EventArgs e)

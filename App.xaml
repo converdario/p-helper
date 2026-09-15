@@ -6,20 +6,17 @@
         
         <local:IconConverter x:Key="IconConverter"/>
         
-        <!-- Colori Base -->
         <SolidColorBrush x:Key="BgDark" Color="#1A1A1A"/>
         <SolidColorBrush x:Key="BgPanel" Color="#252525"/>
         <SolidColorBrush x:Key="BorderLight" Color="#3E3E3E"/>
         <SolidColorBrush x:Key="AccentBlue" Color="#35A0F0"/>
         <SolidColorBrush x:Key="TextWhite" Color="#EEEEEE"/>
 
-        <!-- Stile TextBlock -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
         </Style>
 
-        <!-- Stile Bottone Chiudi (Diventa rosso) -->
         <Style x:Key="CloseButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#AAAAAA"/>
@@ -41,7 +38,6 @@
             </Setter>
         </Style>
 
-        <!-- Stile Bottoni Standard -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="{StaticResource BgPanel}"/>
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
@@ -71,7 +67,6 @@
             </Setter>
         </Style>
 
-        <!-- Stile CheckBox -->
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -100,7 +95,6 @@
             </Setter>
         </Style>
 
-        <!-- Stile ComboBoxItem -->
         <Style TargetType="ComboBoxItem">
             <Setter Property="Background" Value="{StaticResource BgPanel}" />
             <Setter Property="Foreground" Value="{StaticResource TextWhite}" />
@@ -126,7 +120,6 @@
             </Setter>
         </Style>
 
-        <!-- Stile ComboBox -->
         <Style TargetType="ComboBox">
             <Setter Property="Background" Value="{StaticResource BgPanel}"/>
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
@@ -166,17 +159,14 @@
             </Setter>
         </Style>
 
-        <!-- Stile DataGrid -->
         <Style TargetType="DataGrid">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
             
-            <!-- Sfondo normale e sfondo alternato molto più tenui -->
             <Setter Property="RowBackground" Value="Transparent"/>
             <Setter Property="AlternatingRowBackground" Value="#05FFFFFF"/>
             
-            <!-- Aggiunta della linea divisoria orizzontale elegante -->
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
             <Setter Property="HorizontalGridLinesBrush" Value="#2A2A2A"/>
             
@@ -212,7 +202,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Stile ContextMenu (Sfondo e bordi arrotondati) -->
         <Style TargetType="ContextMenu">
             <Setter Property="Background" Value="{StaticResource BgPanel}"/>
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
@@ -234,7 +223,6 @@
             </Setter>
         </Style>
 
-        <!-- Stile MenuItem (Testo, Hover e Spunta) -->
         <Style TargetType="MenuItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource TextWhite}"/>
@@ -246,11 +234,10 @@
                         <Border Background="{TemplateBinding Background}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32"/> <!-- Colonna dedicata alla spunta ✓ -->
+                                    <ColumnDefinition Width="32"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 
-                                <!-- Icona della spunta (nascosta di default) -->
                                 <TextBlock x:Name="CheckMark" Text="✓" Grid.Column="0" 
                                            Visibility="Hidden" Foreground="{StaticResource TextWhite}" 
                                            VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="14"/>
@@ -260,15 +247,12 @@
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <!-- Mostra la spunta se la voce è spuntata -->
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
                             </Trigger>
-                            <!-- Hover effect -->
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="#333333"/>
                             </Trigger>
-                            <!-- Trasforma la voce in un "Titolo" grigio se disabilitata -->
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Foreground" Value="#888888"/>
                                 <Setter Property="Background" Value="Transparent"/>
@@ -279,7 +263,6 @@
             </Setter>
         </Style>
 
-        <!-- Stile Separatore -->
         <Style TargetType="Separator">
             <Setter Property="Background" Value="{StaticResource BorderLight}"/>
             <Setter Property="Margin" Value="0,4"/>
@@ -293,7 +276,6 @@
             </Setter>
         </Style>
 
-        <!-- Stile Cursore ScrollBar -->
         <Style x:Key="Win11ScrollThumb" TargetType="Thumb">
             <Setter Property="Template">
                 <Setter.Value>
@@ -304,7 +286,6 @@
             </Setter>
         </Style>
 
-        <!-- Stile Globale ScrollBar (Solo Verticale) -->
         <Style TargetType="ScrollBar">
             <Setter Property="Background" Value="Transparent"/>
             <Style.Triggers>
